@@ -6,7 +6,7 @@ on:
     - cron: 0 20 * * *
 
 env:
-  REPO_URL: https://github.com/zhoufuli/immortalwrt-rk356x
+  REPO_URL: https://github.com/langcunfu/zhoufuli-immortalwrt-rk356x
   REPO_BRANCH: main
   CONFIG_FILE: configs/g68_mtk_wifi.config
   DIY_SCRIPT: diy-mini.sh
