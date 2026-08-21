@@ -2,8 +2,6 @@ name: nsy-g68-plus
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: 0 20 * * *
 
 env:
   REPO_URL: https://github.com/langcunfu/zhoufuli-immortalwrt-rk356x
