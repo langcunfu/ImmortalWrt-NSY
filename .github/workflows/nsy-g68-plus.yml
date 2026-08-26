@@ -133,13 +133,17 @@ jobs:
       run: |
         df -hT
         [ -e files ] && mv files $OPENWRT_PATH/files
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE $OPENWRT_PATH/.config
+        # 重要：删除下面这行，不要再覆盖.config
+        # [ -e $CONFIG_FILE ] && mv $CONFIG_FILE $OPENWRT_PATH/.config
         chmod +x $GITHUB_WORKSPACE/scripts/*.sh
         chmod +x $DIY_SCRIPT
         cd $OPENWRT_PATH
         $GITHUB_WORKSPACE/$DIY_SCRIPT
         $GITHUB_WORKSPACE/scripts/preset-clash-core.sh $CLASH_KERNEL
         # $GITHUB_WORKSPACE/scripts/preset-adguard-core.sh $CLASH_KERNEL
+        # 调试输出，排查diy脚本是否篡改rust选项
+        echo "==== After diy script RUST config dump ===="
+        grep -E 'CONFIG_RUST|Shadowsocks.*Rust' .config || true
 
     - name: Download DL Package
       run: |
