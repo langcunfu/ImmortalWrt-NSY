@@ -139,7 +139,7 @@ jobs:
         chmod +x $DIY_SCRIPT
         cd $OPENWRT_PATH
         $GITHUB_WORKSPACE/$DIY_SCRIPT
-        $GITHUB_WORKSPACE/scripts/preset-clash-core.sh $CLASH_KERNEL
+        # $GITHUB_WORKSPACE/scripts/preset-clash-core.sh $CLASH_KERNEL
         # $GITHUB_WORKSPACE/scripts/preset-adguard-core.sh $CLASH_KERNEL
         echo "==== After diy script RUST config dump ===="
         grep -E 'CONFIG_RUST|CONFIG_PACKAGE_rust|Shadowsocks.*Rust' .config || true
