@@ -148,6 +148,12 @@ jobs:
       run: |
         df -hT
         cd $OPENWRT_PATH
+        echo "==================== 编译前 .config 绝对路径 ===================="
+        realpath .config
+        ls -lh .config
+
+        echo "==================== 完整全部插件&组件配置 ===================="
+        cat .config
         make defconfig
         echo "==== Final rust config check before download ===="
         grep -E 'CONFIG_RUST|CONFIG_PACKAGE_rust|Shadowsocks.*Rust' .config || true
