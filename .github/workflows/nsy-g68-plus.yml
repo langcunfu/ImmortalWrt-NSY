@@ -239,6 +239,7 @@ jobs:
       if: always()
       with:
         name: build-config-files
+        retention-days: 14
         path: |
           ${{ github.workspace }}/01_after_diy.config
           ${{ github.workspace }}/02_pre_build_final.config
