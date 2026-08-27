@@ -1,6 +1,4 @@
 #!/bin/bash
-# 保存OpenWrt源码根目录
-ROOT_DIR="$PWD"
 
 # 修改默认IP
 # sed -i 's/192.168.1.1/10.0.0.1/g' package/base-files/files/bin/config_generate
@@ -111,5 +109,3 @@ git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-a
 
 ./scripts/feeds update -a
 ./scripts/feeds install -a
-cd "${ROOT_DIR}"
-make defconfig
