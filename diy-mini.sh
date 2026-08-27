@@ -111,6 +111,8 @@ git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-a
 
 ./scripts/feeds update -a
 ./scripts/feeds install -a
+# 直接删除rust源码包，彻底禁止host‑rust编译
+rm -rf feeds/packages/lang/rust
 cd "${ROOT_DIR}"
 # 删除原有的=y行，再写入关闭配置，避免重复行冲突
 sed -i '/^CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Client/d' .config
