@@ -143,6 +143,9 @@ jobs:
         # $GITHUB_WORKSPACE/scripts/preset-adguard-core.sh $CLASH_KERNEL
         echo "==== After diy script RUST config dump ===="
         grep -E 'CONFIG_RUST|CONFIG_PACKAGE_rust|Shadowsocks.*Rust' .config || true
+        realpath .config
+        # diy脚本执行完毕立刻导出第一份配置
+        cp .config $GITHUB_WORKSPACE/01_after_diy.config
 
     - name: Download DL Package
       run: |
@@ -155,6 +158,8 @@ jobs:
         echo "==================== 完整全部插件&组件配置 ===================="
         cat .config
         make defconfig
+        # defconfig之后导出第二份编译前最终配置
+        cp .config $GITHUB_WORKSPACE/02_pre_build_final.config
         echo "==== Final rust config check before download ===="
         grep -E 'CONFIG_RUST|CONFIG_PACKAGE_rust|Shadowsocks.*Rust' .config || true
         make download -j8
