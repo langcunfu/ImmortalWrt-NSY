@@ -150,6 +150,10 @@ jobs:
         df -hT
         cd $OPENWRT_PATH
         make defconfig
+        # =========新增这一行，强制标记host‑rust不参与编译=========
+        echo "CONFIG_PACKAGE_rust=n" >> .config
+        # 打印校验
+        grep -E 'CONFIG_RUST|CONFIG_PACKAGE_rust' .config || true
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
