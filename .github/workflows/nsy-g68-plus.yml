@@ -141,9 +141,12 @@ jobs:
         $GITHUB_WORKSPACE/$DIY_SCRIPT
         $GITHUB_WORKSPACE/scripts/preset-clash-core.sh $CLASH_KERNEL
         # $GITHUB_WORKSPACE/scripts/preset-adguard-core.sh $CLASH_KERNEL
-        # 调试输出，排查diy脚本是否篡改rust选项
+        # 强制注释passwall的rust相关子选项，切断rust编译触发源
+        sed -i 's/^CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Client=y/# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Client=y/' .config
+        sed -i 's/^CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Server=y/# CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Shadowsocks_Rust_Server=y/' .config
+        make defconfig
         echo "==== After diy script RUST config dump ===="
-        grep -E 'CONFIG_RUST|Shadowsocks.*Rust' .config || true
+        grep -E 'CONFIG_RUST|CONFIG_PACKAGE_rust|Shadowsocks.*Rust' .config || true
 
     - name: Download DL Package
       run: |
