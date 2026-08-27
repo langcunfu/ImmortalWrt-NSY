@@ -234,3 +234,11 @@ jobs:
           - ${{ env.COMMIT_DATE }}
           - ${{ env.COMMIT_MESSAGE }}
           - ${{ env.COMMIT_HASH }}
+    - name: Upload config artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: build-config-files
+        path: |
+          ${{ github.workspace }}/01_after_diy.config
+          ${{ github.workspace }}/02_pre_build_final.config
