@@ -103,9 +103,10 @@ chmod 755 package/base-files/files/bin/coremark.sh
 git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-app-eqosplus
 
 
-#上游已经把编译器资源包删除了，先禁用吧
-sed -i 's/ci-llvm=true/ci-llvm=false/g' feeds/packages/lang/rust/Makefile
-
-
 ./scripts/feeds update -a
 ./scripts/feeds install -a
+
+# feeds拉取完成后，修改rust Makefile，降级至1.93.0
+sed -i 's/ci-llvm=true/ci-llvm=false/g' feeds/packages/lang/rust/Makefile
+sed -i '/^PKG_VERSION:=/c PKG_VERSION:=1.93.0' feeds/packages/lang/rust/Makefile
+sed -i '/^PKG_HASH:=/c PKG_HASH:=611a8ef671dc656f0f48a7e4f5a8a58f843b72ad062129a344574d50021f477e' feeds/packages/lang/rust/Makefile
