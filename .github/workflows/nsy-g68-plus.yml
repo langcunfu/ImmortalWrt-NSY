@@ -1,8 +1,6 @@
 name: nsy-g68-plus
-
 on:
   workflow_dispatch:
-
 env:
   REPO_URL: https://github.com/langcunfu/zhoufuli-immortalwrt-rk356x
   REPO_BRANCH: main
@@ -15,11 +13,9 @@ env:
   FIRMWARE_TAG: nsy-g68-plus
   TZ: Asia/Shanghai
   GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-
 jobs:
   Build:
     runs-on: ubuntu-22.04
-
     outputs:
       COMMIT_AUTHOR: ${{ steps.clone.outputs.COMMIT_AUTHOR }}
       COMMIT_DATE: ${{ steps.clone.outputs.COMMIT_DATE }}
@@ -27,7 +23,6 @@ jobs:
       COMMIT_HASH: ${{ steps.clone.outputs.COMMIT_HASH }}
       DEVICE_TARGET: ${{ steps.variable.outputs.DEVICE_TARGET }}
       DEVICE_SUBTARGET: ${{ steps.variable.outputs.DEVICE_SUBTARGET }}
-
     steps:
     - name: Merge Disks
       uses: easimon/maximize-build-space@master
@@ -35,16 +30,13 @@ jobs:
         swap-size-mb: 1024
         temp-reserve-mb: 100
         root-reserve-mb: 1024
-
     - name: Checkout
       uses: actions/checkout@main
-
     - name: Create a Working Directory
       run: |
         mkdir -p ${GITHUB_WORKSPACE}/workdir
         chmod 755 ${GITHUB_WORKSPACE}/workdir
         echo "WORKDIR_PATH=$PWD" >> $GITHUB_ENV
-
     - name: Check Server Performance
       run: |
         echo "警告⚠"
@@ -59,7 +51,6 @@ jobs:
         echo -e "$(sudo lshw -short -C memory | grep GiB)\n"
         echo "--------------------------硬盘信息--------------------------"
         echo "硬盘数量: $(ls /dev/sd* | grep -v [1-9] | wc -l)" && df -hT
-
     - name: Initialization Environment
       env:
         DEBIAN_FRONTEND: noninteractive
@@ -75,7 +66,6 @@ jobs:
         sudo -E apt-get -y autoremove --purge
         sudo -E apt-get -y clean
         sudo timedatectl set-timezone "$TZ"
-
     - name: Clone Source Code
       working-directory: ${{ env.WORKDIR_PATH }}/workdir
       id: clone
@@ -97,14 +87,12 @@ jobs:
         COMMIT_HASH=$(git show -s --date=short --format="hash: %H")
         echo "COMMIT_HASH=$COMMIT_HASH" >> $GITHUB_ENV
         echo "COMMIT_HASH=$COMMIT_HASH" >> $GITHUB_OUTPUT
-
     - name: Install Feeds
       run: |
         df -hT
         cd $OPENWRT_PATH
         ./scripts/feeds update -a
         ./scripts/feeds install -a
-
     - name: Generate Variables
       id: variable
       run: |
@@ -120,7 +108,6 @@ jobs:
         DEVICE_SUBTARGET=$(cat .config | grep CONFIG_TARGET_SUBTARGET | awk -F '"' '{print $2}')
         echo "DEVICE_SUBTARGET=$DEVICE_SUBTARGET" >> $GITHUB_ENV
         echo "DEVICE_SUBTARGET=$DEVICE_SUBTARGET" >> $GITHUB_OUTPUT
-
     - name: Cache Toolchain
       if: env.CACHE_TOOLCHAIN == 'true'
       uses: HiGarfield/cachewrtbuild@main
@@ -128,7 +115,11 @@ jobs:
         ccache: false
         mixkey: ${{ env.SOURCE_REPO }}-${{ env.REPO_BRANCH }}-${{ env.DEVICE_TARGET }}-${{ env.DEVICE_SUBTARGET }}
         prefix: ${{ env.OPENWRT_PATH }}
-
+    - name: Start capture full log
+      if: (!cancelled())
+      run: |
+        cd $OPENWRT_PATH
+        echo "===== Build Full Log Start =====" > build_full.log
     - name: Load Custom Configuration
       run: |
         df -hT
@@ -137,19 +128,21 @@ jobs:
         chmod +x $GITHUB_WORKSPACE/scripts/*.sh
         chmod +x $DIY_SCRIPT
         cd $OPENWRT_PATH
-        $GITHUB_WORKSPACE/$DIY_SCRIPT
-        $GITHUB_WORKSPACE/scripts/preset-clash-core.sh $CLASH_KERNEL
+        echo "===== Run diy-mini.sh =====" | tee -a build_full.log
+        $GITHUB_WORKSPACE/$DIY_SCRIPT 2>&1 | tee -a build_full.log
+        echo "===== Run preset-clash-core.sh =====" | tee -a build_full.log
+        $GITHUB_WORKSPACE/scripts/preset-clash-core.sh $CLASH_KERNEL 2>&1 | tee -a build_full.log
         # $GITHUB_WORKSPACE/scripts/preset-adguard-core.sh $CLASH_KERNEL
-
     - name: Download DL Package
       run: |
         df -hT
         cd $OPENWRT_PATH
-        make defconfig
-        make download -j8
-        find dl -size -1024c -exec ls -l {} \;
-        find dl -size -1024c -exec rm -f {} \;
-
+        echo "===== Run make defconfig =====" | tee -a build_full.log
+        make defconfig 2>&1 | tee -a build_full.log
+        echo "===== Run make download =====" | tee -a build_full.log
+        make download -j8 2>&1 | tee -a build_full.log
+        find dl -size -1024c -exec ls -l {} \; 2>&1 | tee -a build_full.log
+        find dl -size -1024c -exec rm -f {} \; 2>&1 | tee -a build_full.log
     - name: Compile Firmware
       id: compile
       run: |
@@ -157,24 +150,52 @@ jobs:
         cd $OPENWRT_PATH
         mkdir -p files/etc/uci-defaults
         cp $GITHUB_WORKSPACE/scripts/init-settings.sh files/etc/uci-defaults/99-init-settings
-        echo -e "$(nproc) thread compile"
-        make -j$(nproc) || make -j1 || make -j1 V=s
+        echo -e "$(nproc) thread compile" | tee -a build_full.log
+        set +e
+        make -j$(nproc) 2>&1 | tee -a build_full.log
+        ret1=${PIPESTATUS[0]}
+        if [ $ret1 -ne 0 ];then
+          echo "make -j$(nproc) failed, retry with -j1" | tee -a build_full.log
+          make -j1 2>&1 | tee -a build_full.log
+          ret2=${PIPESTATUS[0]}
+          if [ $ret2 -ne 0 ];then
+            echo "make -j1 failed, retry with -j1 V=s" | tee -a build_full.log
+            make -j1 V=s 2>&1 | tee -a build_full.log
+            ret3=${PIPESTATUS[0]}
+            if [ $ret3 -ne 0 ];then
+              echo "Final compile failed" | tee -a build_full.log
+              exit $ret3
+            fi
+          fi
+        fi
         echo "status=success" >> $GITHUB_OUTPUT
         echo "DATE=$(date +"%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
         echo "TAG_DATE=$(date +"%Y.%m.%d-%H.%M")" >> $GITHUB_ENV
         echo "FILE_DATE=$(date +"%Y.%m.%d")" >> $GITHUB_ENV
-
     - name: Check Space Usage
       if: (!cancelled())
       run: df -hT
-
+    - name: Extract error log with context
+      if: (!cancelled())
+      run: |
+        cd $OPENWRT_PATH
+        grep -E -C2 'ERROR|error|Error|FAILED|failed|Failed|404|No such file|cannot|Cannot|panic|Caused by' build_full.log > build_error.log
+        echo -e "\n==================== 提取后的错误日志 ====================\n"
+        cat build_error.log
+    - name: Upload build log artifacts
+      uses: actions/upload-artifact@v4
+      if: (!cancelled())
+      with:
+        name: build-logs
+        path: |
+          ${{ env.OPENWRT_PATH }}/build_full.log
+          ${{ env.OPENWRT_PATH }}/build_error.log
     - name: Upload Bin Directory
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
       uses: actions/upload-artifact@main
       with:
         name: ${{ env.SOURCE_REPO }}-bin-${{ env.DEVICE_TARGET }}-${{ env.DEVICE_SUBTARGET }}-${{ env.FILE_DATE }}
         path: ${{ env.OPENWRT_PATH }}/bin
-
     - name: Organize Files
       if: steps.compile.outputs.status == 'success'
       run: |
@@ -186,14 +207,12 @@ jobs:
         rm -rf packages feeds.buildinfo version.buildinfo
         echo "KERNEL=$(cat *.manifest | grep ^kernel | cut -d- -f2 | tr -d ' ')" >> $GITHUB_ENV
         echo "FIRMWARE_PATH=$PWD" >> $GITHUB_ENV
-
     - name: Upload Firmware To Artifact
       if: steps.compile.outputs.status == 'success' && env.FIRMWARE_RELEASE != 'true'
       uses: actions/upload-artifact@main
       with:
         name: ${{ env.SOURCE_REPO }}-firmware-${{ env.DEVICE_TARGET }}-${{ env.DEVICE_SUBTARGET }}-${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE_PATH }}
-
     - name: Upload Firmware To Release
       if: steps.compile.outputs.status == 'success' && env.FIRMWARE_RELEASE == 'true'
       uses: ncipollo/release-action@v1
