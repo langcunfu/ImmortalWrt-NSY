@@ -1,16 +1,22 @@
 #!/bin/bash
+# ========== 新增：全量清理旧缓存，必须放在脚本最开头 ==========
+rm -rf feeds package/feeds build_dir staging_dir tmp dl
+./scripts/feeds update -a
+./scripts/feeds install -a
+
+# 校验当前feeds rust版本，打印到日志看是否是1.77.2
+echo "==== Check Rust Version in feeds ===="
+grep RUST_VERSION feeds/packages/lang/rust/Makefile
+
+# 上游已经把编译器资源包删除了，先禁用ci-llvm（放到feeds install之后！）
+sed -i 's/ci-llvm=true/ci-llvm=false/g' feeds/packages/lang/rust/Makefile
 
 # 修改默认IP
 # sed -i 's/192.168.1.1/10.0.0.1/g' package/base-files/files/bin/config_generate
-
 # 更改默认 Shell 为 zsh
 # sed -i 's/\/bin\/ash/\/usr\/bin\/zsh/g' package/base-files/files/etc/passwd
-
 # TTYD 免登录
 # sed -i 's|/bin/login|/bin/login -f root|g' feeds/packages/utils/ttyd/files/ttyd.config
-
-
-
 # 拉取仓库文件夹
 merge_package() {
 	# 参数1是分支名,参数2是库地址,参数3是所有文件下载到指定路径。
@@ -39,7 +45,6 @@ merge_package() {
 	done
 	cd "$rootdir"
 }
-
 # Git稀疏克隆，只克隆指定目录到本地
 function git_sparse_clone() {
   branch="$1" repourl="$2" && shift 2
@@ -49,63 +54,42 @@ function git_sparse_clone() {
   mv -f $@ ../package
   cd .. && rm -rf $repodir
 }
-
-
-
 # Themes
 # git clone --depth=1 -b 18.06 https://github.com/jerrykuku/luci-theme-argon package/luci-theme-argon
 # git clone --depth=1 https://github.com/jerrykuku/luci-app-argon-config package/luci-app-argon-config
 # merge_package master https://github.com/coolsnowwolf/luci feeds/luci/themes themes/luci-theme-design
-
-
 # 更改 Argon 主题背景
 rm -rf feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background/*
 # cp -f $GITHUB_WORKSPACE/images/bg1.jpg feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg
 # mkdir -p package/luci-theme-argon/htdocs/luci-static/argon/img
 # cp -f $GITHUB_WORKSPACE/images/bg1.jpg package/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg
-
-
 # iStore
 # git_sparse_clone main https://github.com/linkease/istore-ui app-store-ui
 # git_sparse_clone main https://github.com/linkease/istore luci
-
-
 # 为固件版本加上编译作者
-author="xiaomeng9597"
+author="langcunfu"
 sed -i "s/DISTRIB_DESCRIPTION.*/DISTRIB_DESCRIPTION='%D %V %C by ${author}'/g" package/base-files/files/etc/openwrt_release
 sed -i "s/OPENWRT_RELEASE.*/OPENWRT_RELEASE=\"%D %V %C by ${author}\"/g" package/base-files/files/usr/lib/os-release
 cp -f $GITHUB_WORKSPACE/configfiles/99-default-settings-chinese package/emortal/default-settings/files/99-default-settings-chinese
-
-
 # 修改 Makefile
 # find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -i sed -i 's/..\/..\/luci.mk/\$(TOPDIR)\/feeds\/luci\/luci.mk/g' {}
 # find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -i sed -i 's/..\/..\/lang\/golang\/golang-package.mk/\$(TOPDIR)\/feeds\/packages\/lang\/golang\/golang-package.mk/g' {}
 # find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -i sed -i 's/PKG_SOURCE_URL:=@GHREPO/PKG_SOURCE_URL:=https:\/\/github.com/g' {}
 # find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -i sed -i 's/PKG_SOURCE_URL:=@GHCODELOAD/PKG_SOURCE_URL:=https:\/\/codeload.github.com/g' {}
-
-
 # samba解除root限制
 # sed -i 's/invalid users = root/#&/g' feeds/packages/net/samba4/files/smb.conf.template
-
-
 # 最大连接数修改为65535
 sed -i '/customized in this file/a net.netfilter.nf_conntrack_max=65535' package/base-files/files/etc/sysctl.conf
-
-
 # 集成CPU性能跑分脚本
 cp -f $GITHUB_WORKSPACE/configfiles/coremark/coremark-arm64 package/base-files/files/bin/coremark-arm64
 cp -f $GITHUB_WORKSPACE/configfiles/coremark/coremark-arm64.sh package/base-files/files/bin/coremark.sh
 chmod 755 package/base-files/files/bin/coremark-arm64
 chmod 755 package/base-files/files/bin/coremark.sh
-
-
 # 定时限速插件
 git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-app-eqosplus
 
-
-#上游已经把编译器资源包删除了，先禁用吧
-sed -i 's/ci-llvm=true/ci-llvm=false/g' feeds/packages/lang/rust/Makefile
-
-
-./scripts/feeds update -a
-./scripts/feeds install -a
+# ====== 可选：修复argon wget-any警告，取消下面注释启用 ======
+# sed -i 's/+wget-any/+wget/g' feeds/luci/themes/luci-theme-argon/Makefile
+# ====== 可选：清理acme、exim警告 ======
+# sed -i 's/+acme//g' feeds/packages/net/acme-acmesh/Makefile
+# rm -rf feeds/packages/mail/exim
