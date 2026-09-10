@@ -101,6 +101,11 @@ echo "===== Check ruby Makefile PKG_BUILD_DEPENDS ====="
 grep PKG_BUILD_DEPENDS feeds/packages/lang/ruby/Makefile
 echo "=================================================="
 
+# ===== 修改samba4镜像源，删除http地址 =====
+sed -i '/http:\/\/www.nic.funet.fi/d' feeds/packages/net/samba4/Makefile
+sed -i '/http:\/\/samba.mirror.bit.nl/d' feeds/packages/net/samba4/Makefile
+# ===== feeds install =====
+
 # 先删除旧缓存！！顺序修正
 rm -rf feeds/packages.tmp
 
@@ -130,3 +135,7 @@ echo "=================================="
 # sed -i 's/ci-llvm=true/ci-llvm=false/g' feeds/packages/lang/rust/Makefile
 # sed -i '/^PKG_VERSION:=/c\PKG_VERSION:=1.93.0' feeds/packages/lang/rust/Makefile
 # sed -i '/^PKG_HASH:=/c\PKG_HASH:=e30d898272c587a22f77679f03c5e8192b5645c7c9ccc3407ad1106761507cea' feeds/packages/lang/rust/Makefile
+
+export DOWNLOAD_METHOD="wget"
+export DOWNLOAD_TIMEOUT=240
+export DOWNLOAD_RETRY=5
