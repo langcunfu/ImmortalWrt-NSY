@@ -48,13 +48,10 @@ function git_sparse_clone() {
   cd .. && rm -rf $repodir
 }
 
-
-
 # Themes
 # git clone --depth=1 -b 18.06 https://github.com/jerrykuku/luci-theme-argon package/luci-theme-argon
 # git clone --depth=1 https://github.com/jerrykuku/luci-app-argon-config package/luci-app-argon-config
 # merge_package master https://github.com/coolsnowwolf/luci feeds/luci/themes themes/luci-theme-design
-
 
 # 更改 Argon 主题背景
 rm -rf feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background/*
@@ -62,11 +59,9 @@ rm -rf feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background/*
 # mkdir -p package/luci-theme-argon/htdocs/luci-static/argon/img
 # cp -f $GITHUB_WORKSPACE/images/bg1.jpg package/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg
 
-
 # iStore
 # git_sparse_clone main https://github.com/linkease/istore-ui app-store-ui
 # git_sparse_clone main https://github.com/linkease/istore luci
-
 
 # 为固件版本加上编译作者
 author="xiaomeng9597"
@@ -74,21 +69,17 @@ sed -i "s/DISTRIB_DESCRIPTION.*/DISTRIB_DESCRIPTION='%D %V %C by ${author}'/g" p
 sed -i "s/OPENWRT_RELEASE.*/OPENWRT_RELEASE=\"%D %V %C by ${author}\"/g" package/base-files/files/usr/lib/os-release
 cp -f $GITHUB_WORKSPACE/configfiles/99-default-settings-chinese package/emortal/default-settings/files/99-default-settings-chinese
 
-
 # 修改 Makefile
 # find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -i sed -i 's/..\/..\/luci.mk/\$(TOPDIR)\/feeds\/luci\/luci.mk/g' {}
 # find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -i sed -i 's/..\/..\/lang\/golang\/golang-package.mk/\$(TOPDIR)\/feeds\/packages\/lang\/golang\/golang-package.mk/g' {}
 # find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -i sed -i 's/PKG_SOURCE_URL:=@GHREPO/PKG_SOURCE_URL:=https:\/\/github.com/g' {}
 # find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -i sed -i 's/PKG_SOURCE_URL:=@GHCODELOAD/PKG_SOURCE_URL:=https:\/\/codeload.github.com/g' {}
 
-
 # samba解除root限制
 # sed -i 's/invalid users = root/#&/g' feeds/packages/net/samba4/files/smb.conf.template
 
-
 # 最大连接数修改为65535
 sed -i '/customized in this file/a net.netfilter.nf_conntrack_max=65535' package/base-files/files/etc/sysctl.conf
-
 
 # 集成CPU性能跑分脚本
 cp -f $GITHUB_WORKSPACE/configfiles/coremark/coremark-arm64 package/base-files/files/bin/coremark-arm64
@@ -96,20 +87,8 @@ cp -f $GITHUB_WORKSPACE/configfiles/coremark/coremark-arm64.sh package/base-file
 chmod 755 package/base-files/files/bin/coremark-arm64
 chmod 755 package/base-files/files/bin/coremark.sh
 
-
 # 定时限速插件
 git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-app-eqosplus
-
-
-./scripts/feeds update -a
-
-# Step1 修改ruby Makefile，移除YJIT带来的rust/host依赖（feeds install之前！）
-sed -i '/^PKG_BUILD_DEPENDS:=ruby\/host/c\PKG_BUILD_DEPENDS:=ruby/host' feeds/packages/lang/ruby/Makefile
-
-# Step2 校验：打印ruby Makefile的PKG_BUILD_DEPENDS行，方便在Action日志查看结果
-echo "===== Check ruby Makefile PKG_BUILD_DEPENDS ====="
-grep PKG_BUILD_DEPENDS feeds/packages/lang/ruby/Makefile
-echo "=================================================="
 
 ./scripts/feeds update -a
 
