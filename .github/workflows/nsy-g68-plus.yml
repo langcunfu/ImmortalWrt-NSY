@@ -1,4 +1,6 @@
 name: nsy-g68-plus
+permissions:
+  contents: write
 on:
   workflow_dispatch:
 env:
@@ -12,7 +14,7 @@ env:
   FIRMWARE_RELEASE: true
   FIRMWARE_TAG: nsy-g68-plus
   TZ: Asia/Shanghai
-  GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+  # GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
 jobs:
   Build:
     runs-on: ubuntu-22.04
@@ -220,7 +222,7 @@ jobs:
         name: R${{ env.DATE }} for ${{ env.FIRMWARE_TAG }}
         allowUpdates: true
         tag: ${{ env.TAG_DATE }}-${{ env.FIRMWARE_TAG }}
-        token: ${{ env.GITHUB_TOKEN }}
+        token: ${{ secrets.GITHUB_TOKEN }}
         artifacts: ${{ env.FIRMWARE_PATH }}/*
         body: |
           **This is OpenWrt Firmware for ${{ env.FIRMWARE_TAG }}**
