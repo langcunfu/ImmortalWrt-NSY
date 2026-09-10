@@ -106,6 +106,10 @@ git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-a
 ./scripts/feeds update -a
 ./scripts/feeds install -a
 
+# 查找所有包含 rust/host 的Makefile
+echo "===== Search PKG_BUILD_DEPENDS rust/host ====="
+grep -r "rust/host" package/ feeds/ || echo "Not found"
+
 # feeds拉取完成后，修改rust Makefile，降级至1.93.0
 sed -i 's/ci-llvm=true/ci-llvm=false/g' feeds/packages/lang/rust/Makefile
 sed -i '/^PKG_VERSION:=/c PKG_VERSION:=1.93.0' feeds/packages/lang/rust/Makefile
