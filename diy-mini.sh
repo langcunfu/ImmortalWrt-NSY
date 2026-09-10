@@ -119,11 +119,6 @@ echo "===== Search PKG_BUILD_DEPENDS rust/host ====="
 grep -r "rust/host" package/ feeds/ || echo "Not found"
 echo "=============================================="
 
-# 校验 .config YJIT 结果
-echo "==== Check final YJIT config ===="
-grep CONFIG_RUBY_ENABLE_YJIT .config
-echo "=================================="
-
 # ========== 【重要】如果你保留 rm -rf rust，下面三行必须删掉！==========
 # sed -i 's/ci-llvm=true/ci-llvm=false/g' feeds/packages/lang/rust/Makefile
 # sed -i '/^PKG_VERSION:=/c\PKG_VERSION:=1.93.0' feeds/packages/lang/rust/Makefile
