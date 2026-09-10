@@ -90,6 +90,7 @@ chmod 755 package/base-files/files/bin/coremark.sh
 # 定时限速插件
 git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-app-eqosplus
 
+rm -rf feeds package/feeds
 ./scripts/feeds update -a
 
 # Step1 修改ruby Makefile，移除YJIT带来的rust/host依赖（feeds install之前！）
@@ -104,13 +105,6 @@ echo "=================================================="
 rm -rf feeds/packages.tmp
 
 ./scripts/feeds install -a -f
-
-# 删除源码内置OAF，消除Not overriding警告
-rm -rf package/feeds/luci/luci-app-oaf
-rm -rf package/OpenAppFilter
-
-# 拉取destan19新版OpenAppFilter
-merge_package master https://github.com/destan19/OpenAppFilter.git package/OpenAppFilter
 
 # Step3 关闭YJIT配置
 sed -i '/CONFIG_RUBY_ENABLE_YJIT=/c\CONFIG_RUBY_ENABLE_YJIT=n' .config
