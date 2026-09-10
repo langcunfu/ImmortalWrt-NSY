@@ -9,8 +9,6 @@
 # TTYD 免登录
 # sed -i 's|/bin/login|/bin/login -f root|g' feeds/packages/utils/ttyd/files/ttyd.config
 
-
-
 # 拉取仓库文件夹
 merge_package() {
 	# 参数1是分支名,参数2是库地址,参数3是所有文件下载到指定路径。
@@ -127,6 +125,13 @@ echo "=================================================="
 rm -rf feeds/packages.tmp
 
 ./scripts/feeds install -a -f
+
+# 删除源码内置OAF，消除Not overriding警告
+rm -rf package/feeds/luci/luci-app-oaf
+rm -rf package/OpenAppFilter
+
+# 拉取destan19新版OpenAppFilter
+merge_package master https://github.com/destan19/OpenAppFilter.git package/OpenAppFilter
 
 # Step3 关闭YJIT配置
 sed -i '/CONFIG_RUBY_ENABLE_YJIT=/c\CONFIG_RUBY_ENABLE_YJIT=n' .config
