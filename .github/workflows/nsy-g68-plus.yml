@@ -99,7 +99,19 @@ jobs:
       id: variable
       run: |
         df -hT
-        cp $CONFIG_FILE $OPENWRT_PATH/.config
+        echo "=== DEBUG ==="
+        echo "WORKSPACE: $GITHUB_WORKSPACE"
+        echo "CONFIG_FILE: $CONFIG_FILE"
+        # 源码目录，和clone日志对应
+        OPENWRT_PATH="${GITHUB_WORKSPACE}/openwrt"
+        echo "OPENWRT_PATH: $OPENWRT_PATH"
+        ls -la $GITHUB_WORKSPACE/configs/
+        # 判断目录是否存在
+        if [ ! -d "$OPENWRT_PATH" ];then
+          echo "❌ openwrt源码目录不存在"
+          exit 1
+        fi
+        cp $GITHUB_WORKSPACE/$CONFIG_FILE $OPENWRT_PATH/.config
         cd $OPENWRT_PATH
         make defconfig > /dev/null 2>&1
         SOURCE_REPO="$(echo $REPO_URL | awk -F '/' '{print $(NF)}')"
