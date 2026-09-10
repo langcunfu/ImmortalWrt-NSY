@@ -99,11 +99,7 @@ jobs:
       id: variable
       run: |
         df -hT
-        echo "=== DEBUG ==="
-        echo "WORKSPACE: $GITHUB_WORKSPACE"
-        echo "CONFIG_FILE: $CONFIG_FILE"
-        ls -la $GITHUB_WORKSPACE/configs/
-        cp $GITHUB_WORKSPACE/$CONFIG_FILE $OPENWRT_PATH/.config
+        cp $CONFIG_FILE $OPENWRT_PATH/.config
         cd $OPENWRT_PATH
         make defconfig > /dev/null 2>&1
         SOURCE_REPO="$(echo $REPO_URL | awk -F '/' '{print $(NF)}')"
