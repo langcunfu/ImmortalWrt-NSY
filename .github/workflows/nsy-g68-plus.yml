@@ -112,7 +112,7 @@ jobs:
           echo "❌ openwrt源码目录不存在 OPENWRT_PATH=$OPENWRT_PATH"
           exit 1
         fi
-        cp $GITHUB_WORKSPACE/$CONFIG_FILE $OPENWRT_PATH/.config
+        cp "$GITHUB_WORKSPACE/$CONFIG_FILE" "$OPENWRT_PATH/.config"
         cd $OPENWRT_PATH
         make defconfig > /dev/null 2>&1
         SOURCE_REPO="$(echo $REPO_URL | awk -F '/' '{print $(NF)}')"
