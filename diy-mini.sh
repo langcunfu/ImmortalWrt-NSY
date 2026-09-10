@@ -106,9 +106,12 @@ git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-a
 ./scripts/feeds update -a
 
 # Step1 修改ruby Makefile，移除YJIT带来的rust/host依赖（feeds install之前！）
-sed -i 's/$(if $(CONFIG_RUBY_ENABLE_YJIT),rust\/host)//g' feeds/packages/lang/ruby/Makefile
+sed -i 's#$(if $(CONFIG_RUBY_ENABLE_YJIT),rust/host)##g' feeds/packages/lang/ruby/Makefile
 
-# Step2 feeds install，此时生成的.packageinfo不再带rust/host依赖
+# Step2 校验：打印ruby Makefile的PKG_BUILD_DEPENDS行，方便在Action日志查看结果
+echo "===== Check ruby Makefile PKG_BUILD_DEPENDS ====="
+grep PKG_BUILD_DEPENDS feeds/packages/lang/ruby/Makefile
+echo "=================================================="
 
 ./scripts/feeds install -a
 
