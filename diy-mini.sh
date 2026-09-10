@@ -91,6 +91,7 @@ chmod 755 package/base-files/files/bin/coremark.sh
 git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-app-eqosplus
 
 rm -rf package/OpenAppFilter
+merge_package master https://github.com/destan19/OpenAppFilter.git package/OpenAppFilter
 rm -rf feeds package/feeds
 ./scripts/feeds update -a
 
@@ -107,27 +108,11 @@ sed -i '/http:\/\/www.nic.funet.fi/d' feeds/packages/net/samba4/Makefile
 sed -i '/http:\/\/samba.mirror.bit.nl/d' feeds/packages/net/samba4/Makefile
 # ===== feeds install =====
 
-# 先删除旧缓存！！顺序修正
-rm -rf feeds/packages.tmp
-
-./scripts/feeds install -a -f
-
-# 删除源码内置OAF，消除Not overriding警告
-rm -rf package/feeds/luci/luci-app-oaf
-rm -rf package/OpenAppFilter
-
-# 拉取destan19新版OpenAppFilter
-merge_package master https://github.com/destan19/OpenAppFilter.git package/OpenAppFilter
-
-# Step3 关闭YJIT配置
-sed -i '/CONFIG_RUBY_ENABLE_YJIT=/c\CONFIG_RUBY_ENABLE_YJIT=n' .config
-
-# Step4 直接禁用rust包，告诉构建系统不要编译rust/host
-sed -i '/CONFIG_PACKAGE_rust=/c\CONFIG_PACKAGE_rust=n' .config
-sed -i '/CONFIG_PACKAGE_rust-/d' .config
-
-# Step5 删除rust目录兜底（如果你不需要降级rust，保留；如果要降级rust，注释掉这行）
+# 删除rust包源码，彻底杜绝rust host编译报错
 rm -rf feeds/packages/lang/rust
+
+rm -rf feeds/packages.tmp
+./scripts/feeds install -a -f
 
 # 查找所有包含 rust/host 的Makefile
 echo "===== Search PKG_BUILD_DEPENDS rust/host ====="
