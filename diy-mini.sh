@@ -90,6 +90,7 @@ chmod 755 package/base-files/files/bin/coremark.sh
 # 定时限速插件
 git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-app-eqosplus
 
+rm -rf package/OpenAppFilter
 rm -rf feeds package/feeds
 ./scripts/feeds update -a
 
