@@ -126,7 +126,7 @@ echo "=================================================="
 # 先删除旧缓存！！顺序修正
 rm -rf feeds/packages.tmp
 
-./scripts/feeds install -a
+./scripts/feeds install -a -f
 
 # Step3 关闭YJIT配置
 sed -i '/CONFIG_RUBY_ENABLE_YJIT=/c\CONFIG_RUBY_ENABLE_YJIT=n' .config
