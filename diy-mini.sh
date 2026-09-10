@@ -112,6 +112,13 @@ rm -rf feeds/packages.tmp
 
 ./scripts/feeds install -a -f
 
+# 删除源码内置OAF，消除Not overriding警告
+rm -rf package/feeds/luci/luci-app-oaf
+rm -rf package/OpenAppFilter
+
+# 拉取destan19新版OpenAppFilter
+merge_package master https://github.com/destan19/OpenAppFilter.git package/OpenAppFilter
+
 # Step3 关闭YJIT配置
 sed -i '/CONFIG_RUBY_ENABLE_YJIT=/c\CONFIG_RUBY_ENABLE_YJIT=n' .config
 
