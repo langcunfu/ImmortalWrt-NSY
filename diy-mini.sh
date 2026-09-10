@@ -104,7 +104,25 @@ git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-a
 
 
 ./scripts/feeds update -a
+
+# Step1 修改ruby Makefile，移除YJIT带来的rust/host依赖（feeds install之前！）
+sed -i 's/$(if $(CONFIG_RUBY_ENABLE_YJIT),rust\/host)//g' feeds/packages/lang/ruby/Makefile
+
+# Step2 feeds install，此时生成的.packageinfo不再带rust/host依赖
+
 ./scripts/feeds install -a
+
+# Step3 关闭YJIT配置
+sed -i '/CONFIG_RUBY_ENABLE_YJIT=y/d' .config
+
+# Step4 直接禁用rust包，告诉构建系统不要编译rust/host
+sed -i '/CONFIG_PACKAGE_rust=y/d' .config
+sed -i '/CONFIG_PACKAGE_rust-/d' .config
+# 额外：直接把rust包标记为不编译
+echo "CONFIG_PACKAGE_rust=n" >> .config
+
+# Step5 删除rust目录兜底
+rm -rf feeds/packages/lang/rust
 
 # 查找所有包含 rust/host 的Makefile
 echo "===== Search PKG_BUILD_DEPENDS rust/host ====="
