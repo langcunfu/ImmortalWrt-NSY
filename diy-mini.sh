@@ -106,32 +106,44 @@ git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-a
 ./scripts/feeds update -a
 
 # Step1 修改ruby Makefile，移除YJIT带来的rust/host依赖（feeds install之前！）
-sed -i 's#$(if $(CONFIG_RUBY_ENABLE_YJIT),rust/host)##g' feeds/packages/lang/ruby/Makefile
+sed -i '/^PKG_BUILD_DEPENDS:=ruby\/host/c\PKG_BUILD_DEPENDS:=ruby/host' feeds/packages/lang/ruby/Makefile
 
 # Step2 校验：打印ruby Makefile的PKG_BUILD_DEPENDS行，方便在Action日志查看结果
 echo "===== Check ruby Makefile PKG_BUILD_DEPENDS ====="
 grep PKG_BUILD_DEPENDS feeds/packages/lang/ruby/Makefile
 echo "=================================================="
 
+./scripts/feeds update -a
+
+# Step1 修改ruby Makefile，移除YJIT带来的rust/host依赖（feeds install之前！）
+sed -i '/^PKG_BUILD_DEPENDS:=/c\PKG_BUILD_DEPENDS:=ruby/host' feeds/packages/lang/ruby/Makefile
+
+# Step2 校验：打印ruby Makefile的PKG_BUILD_DEPENDS行，方便在Action日志查看结果
+echo "===== Check ruby Makefile PKG_BUILD_DEPENDS ====="
+grep PKG_BUILD_DEPENDS feeds/packages/lang/ruby/Makefile
+echo "=================================================="
+
+# 先删除旧缓存！！顺序修正
+rm -rf feeds/packages.tmp
+
 ./scripts/feeds install -a
 
 # Step3 关闭YJIT配置
-sed -i '/CONFIG_RUBY_ENABLE_YJIT=y/d' .config
+sed -i '/CONFIG_RUBY_ENABLE_YJIT=/c\CONFIG_RUBY_ENABLE_YJIT=n' .config
 
 # Step4 直接禁用rust包，告诉构建系统不要编译rust/host
-sed -i '/CONFIG_PACKAGE_rust=y/d' .config
+sed -i '/CONFIG_PACKAGE_rust=/c\CONFIG_PACKAGE_rust=n' .config
 sed -i '/CONFIG_PACKAGE_rust-/d' .config
-# 额外：直接把rust包标记为不编译
-echo "CONFIG_PACKAGE_rust=n" >> .config
 
-# Step5 删除rust目录兜底
+# Step5 删除rust目录兜底（如果你不需要降级rust，保留；如果要降级rust，注释掉这行）
 rm -rf feeds/packages/lang/rust
 
 # 查找所有包含 rust/host 的Makefile
 echo "===== Search PKG_BUILD_DEPENDS rust/host ====="
 grep -r "rust/host" package/ feeds/ || echo "Not found"
+echo "=============================================="
 
-# feeds拉取完成后，修改rust Makefile，降级至1.93.0
-sed -i 's/ci-llvm=true/ci-llvm=false/g' feeds/packages/lang/rust/Makefile
-sed -i '/^PKG_VERSION:=/c PKG_VERSION:=1.93.0' feeds/packages/lang/rust/Makefile
-sed -i '/^PKG_HASH:=/c PKG_HASH:=e30d898272c587a22f77679f03c5e8192b5645c7c9ccc3407ad1106761507cea' feeds/packages/lang/rust/Makefile
+# ========== 【重要】如果你保留 rm -rf rust，下面三行必须删掉！==========
+# sed -i 's/ci-llvm=true/ci-llvm=false/g' feeds/packages/lang/rust/Makefile
+# sed -i '/^PKG_VERSION:=/c\PKG_VERSION:=1.93.0' feeds/packages/lang/rust/Makefile
+# sed -i '/^PKG_HASH:=/c\PKG_HASH:=e30d898272c587a22f77679f03c5e8192b5645c7c9ccc3407ad1106761507cea' feeds/packages/lang/rust/Makefile
