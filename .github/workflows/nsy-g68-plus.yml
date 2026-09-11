@@ -132,8 +132,8 @@ jobs:
         cd $OPENWRT_PATH
         echo "===== Run diy-mini.sh =====" | tee -a build_full.log
         $GITHUB_WORKSPACE/$DIY_SCRIPT 2>&1 | tee -a build_full.log
-        echo "===== Run preset-clash-core.sh =====" | tee -a build_full.log
-        $GITHUB_WORKSPACE/scripts/preset-clash-core.sh $CLASH_KERNEL 2>&1 | tee -a build_full.log
+        # echo "===== Run preset-clash-core.sh =====" | tee -a build_full.log
+        # $GITHUB_WORKSPACE/scripts/preset-clash-core.sh $CLASH_KERNEL 2>&1 | tee -a build_full.log
         # $GITHUB_WORKSPACE/scripts/preset-adguard-core.sh $CLASH_KERNEL
     - name: Download DL Package
       run: |
