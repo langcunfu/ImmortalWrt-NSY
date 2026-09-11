@@ -102,17 +102,6 @@ chmod 755 package/base-files/files/bin/coremark.sh
 # 定时限速插件
 git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-app-eqosplus
 
-
-./scripts/feeds update -a
-
-# Step1 修改ruby Makefile，移除YJIT带来的rust/host依赖（feeds install之前！）
-sed -i '/^PKG_BUILD_DEPENDS:=ruby\/host/c\PKG_BUILD_DEPENDS:=ruby/host' feeds/packages/lang/ruby/Makefile
-
-# Step2 校验：打印ruby Makefile的PKG_BUILD_DEPENDS行，方便在Action日志查看结果
-echo "===== Check ruby Makefile PKG_BUILD_DEPENDS ====="
-grep PKG_BUILD_DEPENDS feeds/packages/lang/ruby/Makefile
-echo "=================================================="
-
 ./scripts/feeds update -a
 
 # Step1 修改ruby Makefile，移除YJIT带来的rust/host依赖（feeds install之前！）
