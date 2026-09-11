@@ -104,6 +104,12 @@ git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-a
 
 ./scripts/feeds update -a
 
+# 覆盖immortalwrt自带的dnsmasq，替换为官方24.10的2.93版本
+rm -rf feeds/packages/net/dnsmasq
+git clone https://github.com/openwrt/packages.git --depth=1 --single-branch -b openwrt-24.10 tmp_pkg
+cp -r tmp_pkg/net/dnsmasq feeds/packages/net/
+rm -rf tmp_pkg
+
 # Step1 修改ruby Makefile，移除YJIT带来的rust/host依赖（feeds install之前！）
 sed -i '/^PKG_BUILD_DEPENDS:=/c\PKG_BUILD_DEPENDS:=ruby/host' feeds/packages/lang/ruby/Makefile
 
