@@ -120,11 +120,17 @@ cd ..
 rm -rf small-tmp
 # ========================================================================================
 
-# 覆盖immortalwrt自带的dnsmasq，替换为官方24.10的2.93版本
-rm -rf feeds/packages/net/dnsmasq
-git clone https://github.com/openwrt/packages.git --depth=1 --single-branch -b openwrt-24.10 tmp_pkg
-cp -r tmp_pkg/net/dnsmasq feeds/packages/net/
+# ========== 升级dnsmasq到2.93 【修复版稀疏检出】 ==========
 rm -rf tmp_pkg
+git clone --filter=blob:none --no-checkout https://github.com/openwrt/packages.git tmp_pkg
+cd tmp_pkg
+git sparse-checkout init --cone
+git sparse-checkout set net/dnsmasq
+git checkout openwrt-24.10
+cp -r net/dnsmasq ../feeds/packages/net/
+cd ..
+rm -rf tmp_pkg
+# ========================================================
 
 # Step1 修改ruby Makefile，移除YJIT带来的rust/host依赖（feeds install之前！）
 sed -i '/^PKG_BUILD_DEPENDS:=/c\PKG_BUILD_DEPENDS:=ruby/host' feeds/packages/lang/ruby/Makefile
