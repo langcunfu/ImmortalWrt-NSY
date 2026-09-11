@@ -181,7 +181,7 @@ jobs:
       if: (!cancelled())
       run: |
         cd $OPENWRT_PATH
-        grep -E -C2 'ERROR|error|Error|FAILED|failed|Failed|404|No such file|cannot|Cannot|panic|Caused by' build_full.log > build_error.log
+        grep -E -C2 'ERROR|error|Error|FAILED|failed|Failed|404|No such file|cannot|Cannot|panic|Caused by' build_full.log > build_error.log || true
         echo -e "\n==================== 提取后的错误日志 ====================\n"
         cat build_error.log
     - name: Upload build log artifacts
