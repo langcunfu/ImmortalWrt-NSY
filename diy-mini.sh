@@ -104,31 +104,10 @@ git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-a
 
 ./scripts/feeds update -a
 
-# ========== sparse-checkout 稀疏检出，只拉取 adguardhome + luci-app-adguardhome ==========
-rm -rf small-tmp
-# 元数据克隆，不下载文件
-git clone --filter=blob:none --no-checkout https://github.com/kenzok8/small-package.git small-tmp
-cd small-tmp
-git checkout main
-git sparse-checkout init --cone
-git sparse-checkout set adguardhome luci-app-adguardhome
-git checkout
-# 复制包到顶层package目录
-cp -r adguardhome ../package/
-cp -r luci-app-adguardhome ../package/
-cd ..
-rm -rf small-tmp
-# ========================================================================================
-
-# ========== 升级dnsmasq到2.93 【修复版稀疏检出】 ==========
+# ===== 替换dnsmasq为官方openwrt-24.10分支2.93版本 =====
 rm -rf tmp_pkg
-git clone --filter=blob:none --no-checkout https://github.com/openwrt/packages.git tmp_pkg
-cd tmp_pkg
-git sparse-checkout init --cone
-git sparse-checkout set net/dnsmasq
-git checkout openwrt-24.10
-cp -r net/dnsmasq ../feeds/packages/net/
-cd ..
+git clone --depth=1 --single-branch -b openwrt-24.10 https://github.com/openwrt/packages.git tmp_pkg
+cp -r tmp_pkg/net/dnsmasq feeds/packages/net/
 rm -rf tmp_pkg
 # ========================================================
 
