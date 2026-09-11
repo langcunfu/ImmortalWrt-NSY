@@ -104,6 +104,22 @@ git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-a
 
 ./scripts/feeds update -a
 
+# ========== sparse-checkout 稀疏检出，只拉取 adguardhome + luci-app-adguardhome ==========
+rm -rf small-tmp
+# 元数据克隆，不下载文件
+git clone --filter=blob:none --no-checkout https://github.com/kenzok8/small-package.git small-tmp
+cd small-tmp
+git checkout main
+git sparse-checkout init --cone
+git sparse-checkout set adguardhome luci-app-adguardhome
+git checkout
+# 复制包到顶层package目录
+cp -r adguardhome ../package/
+cp -r luci-app-adguardhome ../package/
+cd ..
+rm -rf small-tmp
+# ========================================================================================
+
 # 覆盖immortalwrt自带的dnsmasq，替换为官方24.10的2.93版本
 rm -rf feeds/packages/net/dnsmasq
 git clone https://github.com/openwrt/packages.git --depth=1 --single-branch -b openwrt-24.10 tmp_pkg
@@ -117,11 +133,6 @@ sed -i '/^PKG_BUILD_DEPENDS:=/c\PKG_BUILD_DEPENDS:=ruby/host' feeds/packages/lan
 echo "===== Check ruby Makefile PKG_BUILD_DEPENDS ====="
 grep PKG_BUILD_DEPENDS feeds/packages/lang/ruby/Makefile
 echo "=================================================="
-
-# ===== 修改samba4镜像源，删除http地址 =====
-sed -i '/http:\/\/www.nic.funet.fi/d' feeds/packages/net/samba4/Makefile
-sed -i '/http:\/\/samba.mirror.bit.nl/d' feeds/packages/net/samba4/Makefile
-# ===== feeds install =====
 
 # 先删除旧缓存！！顺序修正
 rm -rf feeds/packages.tmp
