@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 修改默认IP
-# sed -i 's/192.168.1.1/10.0.0.1/g' package/base-files/files/bin/config_generate
+sed -i 's/192.168.1.1/192.168.17.1/g' package/base-files/files/bin/config_generate
 
 # 更改默认 Shell 为 zsh
 # sed -i 's/\/bin\/ash/\/usr\/bin\/zsh/g' package/base-files/files/etc/passwd
@@ -71,7 +71,7 @@ rm -rf feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/background/*
 
 
 # 为固件版本加上编译作者
-author="xiaomeng9597"
+author="langcunfu"
 sed -i "s/DISTRIB_DESCRIPTION.*/DISTRIB_DESCRIPTION='%D %V %C by ${author}'/g" package/base-files/files/etc/openwrt_release
 sed -i "s/OPENWRT_RELEASE.*/OPENWRT_RELEASE=\"%D %V %C by ${author}\"/g" package/base-files/files/usr/lib/os-release
 cp -f $GITHUB_WORKSPACE/configfiles/99-default-settings-chinese package/emortal/default-settings/files/99-default-settings-chinese
@@ -116,13 +116,6 @@ echo "=================================================="
 rm -rf feeds/packages.tmp
 
 ./scripts/feeds install -a
-
-# Step3 关闭YJIT配置
-sed -i '/CONFIG_RUBY_ENABLE_YJIT=/c\CONFIG_RUBY_ENABLE_YJIT=n' .config
-
-# Step4 直接禁用rust包，告诉构建系统不要编译rust/host
-sed -i '/CONFIG_PACKAGE_rust=/c\CONFIG_PACKAGE_rust=n' .config
-sed -i '/CONFIG_PACKAGE_rust-/d' .config
 
 # Step5 删除rust目录兜底（如果你不需要降级rust，保留；如果要降级rust，注释掉这行）
 rm -rf feeds/packages/lang/rust
