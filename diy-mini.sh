@@ -107,10 +107,6 @@ git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-a
 # ========== feeds 更新 ==========
 ./scripts/feeds update -a
 
-# ========== 拉取 sirpdboy luci-app-cupsd v1.3（先清理旧目录，避免缓存残留） ==========
-rm -rf package/luci-app-cupsd
-git clone https://github.com/sirpdboy/luci-app-cupsd.git package/luci-app-cupsd
-
 # Step1 修改ruby Makefile，移除YJIT带来的rust/host依赖（feeds install之前！）
 sed -i '/^PKG_BUILD_DEPENDS:=/c\PKG_BUILD_DEPENDS:=ruby/host' feeds/packages/lang/ruby/Makefile
 
