@@ -137,14 +137,6 @@ echo "==== Check final YJIT config ===="
 grep CONFIG_RUBY_ENABLE_YJIT .config
 echo "=================================="
 
-# ========== 修改cups默认配置，固件内置解决631网页Forbidden问题 ==========
-# 开启WebInterface
-sed -i 's/WebInterface no/WebInterface yes/g' feeds/packages/net/cups/files/cupsd.conf
-# 新增监听0.0.0.0:631
-sed -i '/Listen \/var\/run\/cups\/cups.sock/i\Listen 0.0.0.0:631' feeds/packages/net/cups/files/cupsd.conf
-# 修改允许网段为192.168.17.0/24
-sed -i 's/Allow From 192.168.1.0\/24/Allow From 192.168.17.0\/24/g' feeds/packages/net/cups/files/cupsd.conf
-
 # ========== 【重要】如果你保留 rm -rf rust，下面三行必须删掉！==========
 # sed -i 's/ci-llvm=true/ci-llvm=false/g' feeds/packages/lang/rust/Makefile
 # sed -i '/^PKG_VERSION:=/c\PKG_VERSION:=1.93.0' feeds/packages/lang/rust/Makefile
