@@ -104,6 +104,13 @@ git clone --depth=1 https://github.com/sirpdboy/luci-app-eqosplus package/luci-a
 
 ./scripts/feeds update -a
 
+# ========== feeds 更新 ==========
+./scripts/feeds update -a
+
+# ========== 拉取 sirpdboy luci-app-cupsd v1.3（先清理旧目录，避免缓存残留） ==========
+rm -rf package/luci-app-cupsd
+git clone https://github.com/sirpdboy/luci-app-cupsd.git package/luci-app-cupsd
+
 # Step1 修改ruby Makefile，移除YJIT带来的rust/host依赖（feeds install之前！）
 sed -i '/^PKG_BUILD_DEPENDS:=/c\PKG_BUILD_DEPENDS:=ruby/host' feeds/packages/lang/ruby/Makefile
 
@@ -130,11 +137,15 @@ echo "==== Check final YJIT config ===="
 grep CONFIG_RUBY_ENABLE_YJIT .config
 echo "=================================="
 
+# ========== 修改cups默认配置，固件内置解决631网页Forbidden问题 ==========
+# 开启WebInterface
+sed -i 's/WebInterface no/WebInterface yes/g' feeds/packages/net/cups/files/cupsd.conf
+# 新增监听0.0.0.0:631
+sed -i '/Listen \/var\/run\/cups\/cups.sock/i\Listen 0.0.0.0:631' feeds/packages/net/cups/files/cupsd.conf
+# 修改允许网段为192.168.17.0/24
+sed -i 's/Allow From 192.168.1.0\/24/Allow From 192.168.17.0\/24/g' feeds/packages/net/cups/files/cupsd.conf
+
 # ========== 【重要】如果你保留 rm -rf rust，下面三行必须删掉！==========
 # sed -i 's/ci-llvm=true/ci-llvm=false/g' feeds/packages/lang/rust/Makefile
 # sed -i '/^PKG_VERSION:=/c\PKG_VERSION:=1.93.0' feeds/packages/lang/rust/Makefile
 # sed -i '/^PKG_HASH:=/c\PKG_HASH:=e30d898272c587a22f77679f03c5e8192b5645c7c9ccc3407ad1106761507cea' feeds/packages/lang/rust/Makefile
-
-export DOWNLOAD_METHOD="wget"
-export DOWNLOAD_TIMEOUT=240
-export DOWNLOAD_RETRY=5
