@@ -1,0 +1,122 @@
+#!/bin/sh
+
+uci -q get system.@imm_init[0] > "/dev/null" || uci -q add system imm_init > "/dev/null"
+
+if ! uci -q get system.@imm_init[0].system_chn > "/dev/null"; then
+	uci -q batch <<-EOF
+		set system.@system[0].timezone="CST-8"
+		set system.@system[0].zonename="Asia/Shanghai"
+
+		delete system.ntp.server
+		add_list system.ntp.server="ntp.tencent.com"
+		add_list system.ntp.server="ntp1.aliyun.com"
+		add_list system.ntp.server="ntp.ntsc.ac.cn"
+		add_list system.ntp.server="cn.ntp.org.cn"
+
+		set system.@imm_init[0].system_chn="1"
+		commit system
+	EOF
+fi
+
+opkg_mirror="$(uci -q get system.@imm_init[0].opkg_mirror)"
+if [ -z "$opkg_mirror" ]; then
+	opkg_mirror="https://mirrors.vsean.net/openwrt"
+	uci -q batch <<-EOF
+		set system.@imm_init[0].opkg_mirror="$opkg_mirror"
+		commit system
+	EOF
+fi
+
+# 写入软件源（内容对应 configfiles/distfeeds.conf 与 compatfeeds.conf）
+cat > /etc/opkg/distfeeds.conf <<'DISTFEEDS_EOF'
+src/gz immortalwrt_core https://mirrors.vsean.net/openwrt/releases/24.10-SNAPSHOT/targets/rockchip/armv8/packages
+src/gz immortalwrt_base https://mirrors.vsean.net/openwrt/releases/24.10-SNAPSHOT/packages/aarch64_generic/base
+#src/gz immortalwrt_istore https://mirrors.vsean.net/openwrt/releases/24.10-SNAPSHOT/packages/aarch64_generic/istore
+src/gz immortalwrt_luci https://mirrors.vsean.net/openwrt/releases/24.10-SNAPSHOT/packages/aarch64_generic/luci
+src/gz immortalwrt_packages https://mirrors.vsean.net/openwrt/releases/24.10-SNAPSHOT/packages/aarch64_generic/packages
+src/gz immortalwrt_routing https://mirrors.vsean.net/openwrt/releases/24.10-SNAPSHOT/packages/aarch64_generic/routing
+src/gz immortalwrt_telephony https://mirrors.vsean.net/openwrt/releases/24.10-SNAPSHOT/packages/aarch64_generic/telephony
+src/gz immortalwrt_istore_compat https://istore.linkease.com/repo/all/compat
+DISTFEEDS_EOF
+
+cat > /etc/opkg/compatfeeds.conf <<'COMPATFEEDS_EOF'
+src/gz istore_compat https://istore.istoreos.com/repo/all/compat
+COMPATFEEDS_EOF
+
+# 安装 USB 自动挂载 hotplug 脚本（首次开机写入 /etc/hotplug.d/block/）
+mkdir -p /etc/hotplug.d/block
+cat > /etc/hotplug.d/block/99-usb-utf8sda1 <<'USBEOF'
+#!/bin/sh
+
+if [ "$ACTION" = "add" ]; then
+    # sleep 3
+
+    # 只处理 sd 类设备
+    if echo "$DEVNAME" | grep -qE '^sd[a-z]$|^sd[a-z][0-9]$'; then
+        DEV="/dev/$DEVNAME"
+
+        # ==============================================
+        # 智能挂载逻辑：
+        # 1. 统计当前已挂载的 sd 分区数量
+        # 2. 只有 1 个 → 强制挂载到 /mnt/sda1
+        # 3. 多个 → 按 sda1/sda2/sda3... 自动分配
+        # ==============================================
+        MOUNTED_COUNT=$(mount | grep -E '^/dev/sd[a-z][0-9]' | wc -l)
+
+        if [ "$MOUNTED_COUNT" -eq 0 ]; then
+            # 当前无任何挂载 → 第一个设备，强制固定到 /mnt/sda1
+            MNT="/mnt/sda1"
+        else
+            # 已有挂载 → 按顺序自动分配 sda1、sda2、sda3...
+            INDEX=$((MOUNTED_COUNT + 1))
+            MNT="/mnt/sda$INDEX"
+        fi
+
+        # 清理当前设备自身的旧挂载（不影响其他盘）
+        # umount "$DEV" 2>/dev/null
+        # umount "$MNT" 2>/dev/null
+
+        # 创建挂载目录
+        mkdir -p "$MNT"
+
+        # 获取文件系统类型
+        FSTYPE=$(blkid "$DEV" | sed -n 's/.*TYPE="\([^"]*\)".*/\1/p')
+
+        # 分格式挂载
+        case "$FSTYPE" in
+            ntfs)
+                mount -t ntfs "$DEV" "$MNT" -o noatime,nodiratime,iocharset=utf8,force,sync 2>/dev/null
+                ;;
+            ext4)
+                mount -t ext4 "$DEV" "$MNT" -o noatime,nodiratime,sync 2>/dev/null
+                ;;
+            exfat|vfat)
+                mount -t auto "$DEV" "$MNT" -o noatime,nodiratime,iocharset=utf8,sync 2>/dev/null
+                ;;
+            *)
+                mount -t auto "$DEV" "$MNT" -o noatime,nodiratime,sync 2>/dev/null
+                ;;
+        esac
+    fi
+fi
+
+# ==============================================
+# 自动清理 /mnt 下所有空的、未挂载的目录
+# 保护 /mnt/tmp，永远不删除
+# ==============================================
+for dir in /mnt/*/; do
+    if [ -d "$dir" ]; then
+        # 跳过 /mnt/tmp 目录，不删除
+        if [[ "$dir" == "/mnt/tmp/" ]]; then
+            continue
+        fi
+        
+        if [ -z "$(ls -A "$dir" 2>/dev/null)" ] && ! mountpoint -q "$dir"; then
+            rmdir "$dir" 2>/dev/null
+        fi
+    fi
+done
+USBEOF
+chmod 755 /etc/hotplug.d/block/99-usb-utf8sda1
+
+exit 0
